@@ -1,0 +1,4 @@
+Stanford Statues:
+Originally from http://isomap.stanford.edu/datasets.html
+but put in JPG format here:
+http://www.doc.ic.ac.uk/~kpk09/stanford_faces.zip
