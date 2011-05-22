@@ -3,7 +3,7 @@
 Code for landmark isomap (aka Nystrom approximation), Procrustes analysis, and
 various VTK/PIL visualization tools.
 
-To use the library and scripts, add to your /~\/.bashrc/ :
+To use the library and scripts, add to your =~/.bashrc= :
  : export PYTHONPATH=~/code/python/lib:${PYTHONPATH}
 
 The *OpenCV spilltrees*, much faster than the *scipy.spatial kd-trees*, rely on two
@@ -22,12 +22,12 @@ keywords, to choose the size or download the original images (when allowed by
 the author).
 
 ** pdf2text.pl and pdfdir2text.pl
-The first one is a wrapper around the Linux program /pdf2text/. The point is to
+The first one is a wrapper around the Linux program =pdf2text=. The point is to
 get rid of redundant blanks and non-ASCII characters.
 
 The second one is a wrapper around the first one to reproduce an entire
 tree of directories, turning the PDF into text files. Very handy when you are
-given hundreds of PDF and wish to use /grep/.
+given hundreds of PDF and wish to use =grep=.
 
 ** convert_OS_postcodes_to_LatLong.pl
 UK postcodes are freely available at
