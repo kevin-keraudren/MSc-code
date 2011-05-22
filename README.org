@@ -4,12 +4,12 @@ Code for landmark isomap (aka Nystrom approximation), Procrustes analysis, and
 various VTK/PIL visualization tools.
 
 To use the library and scripts, add to your ~/.bashrc :
-export PYTHONPATH=~/code/python/lib:${PYTHONPATH}
+ : export PYTHONPATH=~/code/python/lib:${PYTHONPATH}
 
 The OpenCV spilltrees, much faster than the scipy.spatial kd-trees, rely on two
 patches I sent to OpenCV:
-https://code.ros.org/trac/opencv/ticket/960 [included in revision 4853]
-https://code.ros.org/trac/opencv/ticket/1082 [not included yet]
+[[https://code.ros.org/trac/opencv/ticket/960][ticket 960, included in SVN revision 4853]]
+[[https://code.ros.org/trac/opencv/ticket/1082][ticket 1082, not included yet]]
 
 
 * Perl
@@ -31,8 +31,7 @@ given hundreds of PDF and wish to use "grep".
 
 ** convert_OS_postcodes_to_LatLong.pl
 UK postcodes are freely available at
-https://www.ordnancesurvey.co.uk/opendatadownload/products.html
-[Code-Point® Open]
+[[https://www.ordnancesurvey.co.uk/opendatadownload/products.html][Code-Point® Open]].
 They are in OS grid format, this script turns them in lat-long format.
 
 
