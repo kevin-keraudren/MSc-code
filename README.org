@@ -1,0 +1,44 @@
+* Python
+
+Code for landmark isomap (aka Nystrom approximation), Procrustes analysis, and
+various VTK/PIL visualization tools.
+
+To use the library and scripts, add to your ~/.bashrc :
+export PYTHONPATH=~/code/python/lib:${PYTHONPATH}
+
+The OpenCV spilltrees, much faster than the scipy.spatial kd-trees, rely on two
+patches I sent to OpenCV:
+https://code.ros.org/trac/opencv/ticket/960 [included in revision 4853]
+https://code.ros.org/trac/opencv/ticket/1082 [not included yet]
+
+
+* Perl
+
+These are various scripts written for my personal usage.
+
+** flickr.pl
+Download images from Flickr, with possibility to search by lat-long box and/or
+keywords, to choose the size or download the original images (when allowed by
+the author).
+
+** pdf2text.pl and pdfdir2text.pl
+The first one is a wrapper around the Linux program "pdf2text". The point is to
+get rid of redundant blanks and non-ASCII characters.
+
+The second one is a wrapper around the first one to reproduce an entire
+tree of directories, turning the PDF into text files. Very handy when you are
+given hundreds of PDF and wish to use "grep".
+
+** convert_OS_postcodes_to_LatLong.pl
+UK postcodes are freely available at
+https://www.ordnancesurvey.co.uk/opendatadownload/products.html
+[Code-Point® Open]
+They are in OS grid format, this script turns them in lat-long format.
+
+
+* Bash
+
+** image_path.sh and magick_morph.sh
+The first one turns a list of images in a single line image, the second one
+takes a list of images and turn it in a progressive blending animated GIF.
+
