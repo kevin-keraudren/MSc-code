@@ -27,7 +27,7 @@ def points2image(points,w,h, scale=None, center=None, point_size=2):
     
 
 def render2D( images, coords, output_filename="output.jpg",
-              width=20, height=20, image_w=64, image_h=64, style="image" ):
+              width=20, height=20, image_w=64, image_h=64, style="images" ):
     coords = coords[:,0:2]
     image_grid = []
 

@@ -1,0 +1,6 @@
+#+ATTR_HTML: alt="swissroll.png"
+[[https://raw.github.com/kevin-keraudren/code/master/python/doc/swissroll.png]]
+
+
+
+[[https://raw.github.com/kevin-keraudren/code/master/python/doc/statues.jpg]]

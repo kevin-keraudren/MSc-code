@@ -16,7 +16,7 @@ args = parser.parse_args()
 
 filenames = glob(args.image_directory + '/*')
 
-coords = Utils.read_images(filenames, 'canny')
+coords = Utils.read_images(filenames)
 
 embedded_coords, mapping = Manifold.do_embedding(coords,tree='spilltree')
 
