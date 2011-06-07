@@ -1,6 +1,14 @@
-#+ATTR_HTML: alt="swissroll.png"
+* demo_swissroll.py
+
+Manifold Learning on a swissroll:
+
 [[https://raw.github.com/kevin-keraudren/code/master/python/doc/swissroll.png]]
 
 
+* image_manifold.py
+
+Manifold Learning on images:
 
 [[https://raw.github.com/kevin-keraudren/code/master/python/doc/statues.jpg]]
+
+(statue image available at [[http://www.doc.ic.ac.uk/~kpk09/stanford_faces.zip][stanford_faces.zip]])
