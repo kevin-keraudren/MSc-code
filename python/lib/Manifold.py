@@ -1,3 +1,19 @@
+"""
+Manifold Learning using Landmark Isomap
+
+This module implements the Landmark Isomap method, also known as Nystrom Isomap.
+
+The steps are as follows:
+given a set of points,
+ - build a neighbourhood graph (typically 5-neighbourhood)
+ - select the largest connected component
+ - select landmarks
+ - build the distance matrix of all points to the landmarks using the
+ neighbourhood graph to compute the geodesic distance
+ - run the Nystrom approximation to perform dimensionality reduction.
+ 
+"""
+
 import multiprocessing
 from scipy.spatial import KDTree
 import numpy
@@ -6,22 +22,37 @@ from math import sqrt
 from scipy import stats
 import cv # OpenCV
 
-def search_kdtree( p ):
+def _search_kdtree( p ):
+    """" Needs to be pickable to be used by a multiprocessing.Pool() """
     global tree
-    global k    
-    return  tree.query(p,k)
+    global _k    
+    return  tree.query(p,_k)
     
-def kdTreeSearch( coords, _k, parallel=True ):
+def kdTreeSearch( coords, k, parallel=True ):
+    """
+    Build a k-neighbourhood graph using a scipy.spatial.KDTree
+    
+    Parameters
+    ----------
+    coords : numpy array, each row is a point
+    k : number of neighbours to search
+    parallel: boolean, whether to use multiprocessing
+    
+    Returns
+    -------
+    edges : numpy array of edges, each row is of the form
+            [ point_1, point_2, distance ]    
+    """
     global tree
-    global k
+    global _k
     tree = KDTree( coords )
-    k = _k                     
+    _k = k                     
 
     if parallel:
         pool = multiprocessing.Pool()
-        results = pool.map( search_kdtree, coords )
+        results = pool.map( _search_kdtree, coords )
     else:
-        results = map( search_kdtree, coords )
+        results = map( _search_kdtree, coords )
         
     edges = []
     for i in range( len(coords) ):
@@ -31,29 +62,46 @@ def kdTreeSearch( coords, _k, parallel=True ):
       
     return edges
 
-def search_spilltree(i):
+def _search_spilltree(i):
+    """" Needs to be pickable to be used by a multiprocessing.Pool() """
     global tree
-    global k
-    res = cv.CreateMat(1, k, cv.CV_32SC1)
-    dist = cv.CreateMat(1, k, cv.CV_64FC1)
-    cv.FindFeatures(tree,cv_coords[i,:],res,dist,k,20)
+    global _k
+    res = cv.CreateMat(1, _k, cv.CV_32SC1)
+    dist = cv.CreateMat(1, _k, cv.CV_64FC1)
+    cv.FindFeatures(tree,cv_coords[i,:],res,dist,_k,20)
     edges = []
-    for n in range(0,k):
+    for n in range(0,_k):
         edges.append([i,int(res[0,n]),dist[0,n]])
     return edges
     
-def spillTreeSearch( coords, _k, parallel=True ):
+def spillTreeSearch( coords, k, parallel=True ):
+    """
+    Build a k-neighbourhood graph using an OpenCV spilltree
+    Patch required:
+    https://code.ros.org/trac/opencv/ticket/1082
+    
+    Parameters
+    ----------
+    coords : numpy array, each row is a point
+    k : number of neighbours to search
+    parallel: boolean, whether to use multiprocessing
+    
+    Returns
+    -------
+    edges : numpy array of edges, each row is of the form
+            [ point_1, point_2, distance ]    
+    """    
     global tree
-    global k
+    global _k
     global cv_coords
     nb_points = len(coords)
     cv_coords = cv.fromarray(coords)
     tree = cv.CreateSpillTree(cv_coords,100,0.7,0.1)
-    k = _k
+    _k = k
 
     if parallel:
         pool = multiprocessing.Pool()
-        results = pool.map(search_spilltree, range(cv_coords.rows))
+        results = pool.map(_search_spilltree, range(cv_coords.rows))
         edges = [e for es in results for e in es]
         
     else:
@@ -68,16 +116,51 @@ def spillTreeSearch( coords, _k, parallel=True ):
     return edges
         
 def build_neighbourhood_graph(edges):
+    """
+    Given edges and weights, returns a networkx.Graph()
+    
+    Parameters
+    ----------
+    edges : numpy array of edges, each row is of the form
+            [ point_1, point_2, distance ]        
+    
+    Returns
+    -------
+    graph : a weighted undirected networkx.Graph()
+    """
     graph = networkx.Graph()
     edges = map( lambda e: [e[0],e[1],{'weight':e[2]}], edges)
     graph.add_edges_from(edges)
     return graph
 
 def select_largest_connected_component(graph):
+    """
+    Given a networkx.Graph(), returns the largest connected component
+    
+    Parameters
+    ----------
+    graph : a weighted undirected networkx.Graph()
+    
+    Returns
+    -------
+    new_graph : a weighted undirected networkx.Graph()
+    """    
     cc_list = networkx.connected_components(graph)
     return graph.subgraph(cc_list[0]) # they are correctly sorted
 
 def clean_graph(graph):
+    """
+    Given a networkx.Graph(), returns a new graph with the longest edges
+    removed (cutting at the 95th percentile)
+    
+    Parameters
+    ----------
+    graph : a weighted undirected networkx.Graph()
+    
+    Returns
+    -------
+    new_graph : a weighted undirected networkx.Graph()
+    """        
     weights = [ graph[e[0]][e[1]]['weight'] for e in graph.edges()]
     treshold = stats.scoreatpercentile(weights, 95)
     new_edges = []
@@ -88,15 +171,30 @@ def clean_graph(graph):
     new_graph.add_edges_from(new_edges)
     return new_graph
 
-def do_one_landmark(n):
-    global graph
-    d = networkx.shortest_path_length(graph,n,target=None, weighted=True)
+def _do_one_landmark(n):
+    """" Needs to be pickable to be used by a multiprocessing.Pool() """
+    global _graph
+    d = networkx.shortest_path_length(_graph,n,target=None, weighted=True)
     d = d.values()
     return map(lambda x: x*x, d)
     
-def distance_matrix(_graph,nb_landmarks):
-    global graph
-    graph = _graph
+def distance_matrix(graph,nb_landmarks):
+    """
+    Compute the matrix of geodesic distances to the landmark points
+    
+    Parameters
+    ----------
+    graph : a weighted undirected networkx.Graph()
+    nb_landmarks : number of landmarks, the first points in the graph will be
+                   used
+    
+    Returns
+    -------
+    distances : a numpy array corresponding to the distance matrix,
+                with as many columns as there are landmarks
+    """   
+    global _graph
+    _graph = graph
     nb_nodes = len(graph)
     distances = []
     if nb_landmarks > nb_nodes:
@@ -104,12 +202,25 @@ def distance_matrix(_graph,nb_landmarks):
     nodes = graph.nodes()
 
     pool = multiprocessing.Pool()
-    distances = pool.map(do_one_landmark, nodes[0:nb_landmarks])
+    distances = pool.map(_do_one_landmark, nodes[0:nb_landmarks])
     
     distances = numpy.array(distances)
     return distances.T
 
 def landmark_isomap(C):
+    """
+    Landmark isomap dimensionality reduction method
+    This is the version we implemented in
+    http://www.doc.ic.ac.uk/~kpk09/facecrumbs.html
+    
+    Parameters
+    ----------
+    C : matrix of geodesic distances to the landmarks
+    
+    Returns
+    -------
+    embedded_coords : embedded coordinates of the original points
+    """      
     (nb_points, nb_landmarks) = map(float, C.shape)
     D = C[0:nb_landmarks,0:nb_landmarks]
     H= numpy.eye(nb_landmarks) - 1/nb_landmarks*numpy.ones((nb_landmarks,nb_landmarks))
@@ -136,10 +247,22 @@ def landmark_isomap(C):
     C = 0.5 * numpy.array([D_col_mean]*int(nb_points)) - C
     U = sqrt( nb_landmarks / nb_points ) * numpy.dot(numpy.dot(C, Uw.T) , EwpI)
     return U*[map(sqrt, Ew)]
-    #return U
 
 
 def dr_toolbox(D):
+    """
+    Landmark isomap dimensionality reduction method
+    This is the version implemented in
+    http://homepage.tudelft.nl/19j49/Matlab_Toolbox_for_Dimensionality_Reduction.html
+    
+    Parameters
+    ----------
+    C : matrix of geodesic distances to the landmarks
+    
+    Returns
+    -------
+    embedded_coords : embedded coordinates of the original points
+    """    
     (n, nl) = map(float, D.shape)
     subB = -0.5 * (
         D - numpy.array(
@@ -152,28 +275,36 @@ def dr_toolbox(D):
     val = map(numpy.sqrt, numpy.asarray(beta,dtype=complex))
     invVal = numpy.linalg.inv(numpy.diag(val))
     vec = numpy.dot( numpy.dot(subB,  alpha), invVal)
-    # if size(vec, 2) < no_dims
-    #   no_dims = size(vec, 2);
-    #   warning(['Target dimensionality reduced to ', num2str(no_dims), '...']);
-    # end
 
-    # disp('Computing final embedding');
+    # Computing final embedding
     val = numpy.array(map(numpy.real,val))
     ind = val.argsort()
     ind = ind[::-1] # we want decreasing order
     val = val.take(ind)
     vec = vec.take(ind, axis=1)
-    #return vec
     return vec*[map(sqrt, val)]
-    #return numpy.dot(vec, numpy.array([map(sqrt, val)]*int(n)).transpose() )
-    #return numpy.dot(vec,numpy.diag( val) )
-    # [val, ind] = sort(real(diag(val)), 'descend'); 
-    # vec = vec(:,ind(1:no_dims));
-    # val = val(1:no_dims);
-    # mappedX = real(bsxfun(@times, vec, sqrt(val)'));
+
 
 def do_embedding(coords, tree='kdtree', landmarks=100, verbose=True, clean=True,
                  nystrom='facecrumbs',k=6):
+    """
+    Perform the whole dimensionality reduction process.
+
+    Parameters
+    ----------
+    coords : numpy array, each row is a point
+    tree : 'kdtree' or 'spilltree'
+    landmarks : number of landmarks
+    verbose : True or False
+    clean : True or False, remove the long edges of the neighbourhood graph
+    nystrom : 'facecrumbs' or 'dr_toolbox'
+    k : number of neighbours for the neighbourhood graph
+    
+    Returns
+    -------
+    embedded_coords : embedded coordinates of the original points
+    mapping : initial indices of the points actually embedded
+    """
 
     if tree == 'kdtree':
         edges = kdTreeSearch(coords,k)

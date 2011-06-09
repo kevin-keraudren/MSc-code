@@ -1,3 +1,11 @@
+"""
+VTK shortcut functions
+
+For more about VTK, visit:
+    http://www.vtk.org/
+    http://www.vtk.org/Wiki/VTK/Examples/Python
+"""
+
 import vtk
 import sys
 import numpy
@@ -5,6 +13,19 @@ import numpy
 from vtk.util.colors import peacock
 
 def vtk_point_cloud(points, colors=[], point_size=2):
+    """
+    Represent a point cloud in VTK
+    
+    Parameters
+    ----------
+    points :  numpy array, each row is a point
+    colors : list of colors, one per point
+    point_size : rendering size for the points
+    
+    Returns
+    -------
+    actor : vtkActor representing the point cloud
+    """     
     nb = len(points);
     vtk_points = vtk.vtkPoints();
     vtk_verts = vtk.vtkCellArray();
@@ -50,6 +71,17 @@ def vtk_point_cloud(points, colors=[], point_size=2):
     return actor
 
 def vtk_basic( actors ):
+    """
+    Create a window, renderer, interactor, add the actors and start the thing
+    
+    Parameters
+    ----------
+    actors :  list of vtkActors
+    
+    Returns
+    -------
+    nothing
+    """     
     
     # create a rendering window and renderer
     ren = vtk.vtkRenderer()
@@ -72,6 +104,17 @@ def vtk_basic( actors ):
     iren.Start()
 
 def vtk_Nviews( actors ):
+    """
+    Create a window, an interactor and one renderer per actor
+    
+    Parameters
+    ----------
+    actors :  list of vtkActors
+    
+    Returns
+    -------
+    nothing
+    """    
     N = len(actors)
     
     # create a rendering window and renderers
@@ -95,12 +138,39 @@ def vtk_Nviews( actors ):
     iren.Start()
 
 def vtk_show_points( points, colors=[] ):
+    """
+    Display a point cloud
+    
+    Parameters
+    ----------
+    points :  numpy array, each row is a point
+    colors : list of colors, one per point
+    
+    Returns
+    -------
+    nothing
+    """     
     point_cloud = vtk_point_cloud(points,colors)
     vtk_basic( [point_cloud] )
 
 
 def vtk_colored_graph(points, edges, colors=[], line_width=2):
-    nb_points = len(points)
+    """
+    Represent a graph in VTK
+    
+    Parameters
+    ----------
+    points :  numpy array, each row is a point
+    edges : numpy array of edges, each row is of the form
+            [ point_1, point_2, distance ]      
+    colors : list of colors, one per point
+    line_width : rendering size for the lines
+    
+    Returns
+    -------
+    actor : vtkActor representing the graph
+    """
+    nb_points = len(points)    
     vtk_points = vtk.vtkPoints()
     vtk_lines = vtk.vtkCellArray()
     vtk_colors = vtk.vtkUnsignedCharArray()
@@ -158,6 +228,20 @@ def vtk_colored_graph(points, edges, colors=[], line_width=2):
     return edgeActor
 
 def vtk_triangles(points, triangles, colors=[]):
+    """
+    Display triangles in VTK
+    
+    Parameters
+    ----------
+    points :  numpy array, each row is a point
+    triangle : numpy array of vertices, each row is of the form
+            [ point_1, point_2, point_3 ]      
+    colors : list of colors, one per triangle
+    
+    Returns
+    -------
+    actor : vtkActor representing the triangles
+    """    
     nb_points = len(points)
     vtk_points = vtk.vtkPoints()
     vtk_triangles = vtk.vtkCellArray()
